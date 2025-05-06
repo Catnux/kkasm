@@ -1,3 +1,21 @@
+//!libKK2, the KittyKernel interface library.
+//!
+//!//!Copyright (C) 2025  Avalyn Baldyga
+//!
+//!This program is free software; you can redistribute it and/or modify
+//!it under the terms of the GNU General Public License as published by
+//!the Free Software Foundation; either version 2 of the License, or
+//!(at your option) any later version.
+//!
+//!This program is distributed in the hope that it will be useful,
+//!but WITHOUT ANY WARRANTY; without even the implied warranty of
+//!MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//!GNU General Public License for more details.
+//!
+//!You should have received a copy of the GNU General Public License along
+//!with this program; if not, write to the Free Software Foundation, Inc.,
+//!51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 const std = @import("std");
 const log10_2 = @log10(2.0);
 const expect = std.testing.expect;
@@ -70,11 +88,11 @@ pub fn simulate(code: []u40) ![12]u40 {
     var regs = std.mem.zeroes([12]u40);
     while (true) {
         var instr = code[ptr];
-        const opcode = instr / std.math.pow(u40,10,11);
-        instr -= opcode * std.math.pow(u40,10,11);
+        const opcode = instr / std.math.pow(u40, 10, 11);
+        instr -= opcode * std.math.pow(u40, 10, 11);
         const register = instr / std.math.pow(u40, 10, 10);
         const input = instr - (register * std.math.pow(u40, 10, 10));
-        
+
         //std.debug.print("opcode: {d}, register: {d}, input: {d} regs: {any}\n", .{opcode, register, input, regs});
         switch (opcode) {
             0 => {
@@ -119,7 +137,7 @@ pub fn simulate(code: []u40) ![12]u40 {
             },
             else => {
                 return error.InvalidOpcode;
-            }
+            },
         }
         ptr += 1;
         if (ptr >= code.len) {
@@ -151,7 +169,7 @@ test "Instruction representations" {
 }
 
 test "Simulation test" {
-    var code = [_]u40 {
+    var code = [_]u40{
         1,
         10000000001,
         20000000042,

@@ -1,3 +1,21 @@
+//!KKASM, the KittyKernel Assembler.
+//!
+//!//!Copyright (C) 2025  Avalyn Baldyga
+//!
+//!This program is free software; you can redistribute it and/or modify
+//!it under the terms of the GNU General Public License as published by
+//!the Free Software Foundation; either version 2 of the License, or
+//!(at your option) any later version.
+//!
+//!This program is distributed in the hope that it will be useful,
+//!but WITHOUT ANY WARRANTY; without even the implied warranty of
+//!MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//!GNU General Public License for more details.
+//!
+//!You should have received a copy of the GNU General Public License along
+//!with this program; if not, write to the Free Software Foundation, Inc.,
+//!51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 const std = @import("std");
 const kk2 = @import("libkk2.zig");
 const prepend_zon: struct {
@@ -18,7 +36,7 @@ pub const AssemblyContext = struct {
     constants: std.StringHashMap(u40),
     mark_usages: std.ArrayList(MarkUsage),
     fn init(allocator: std.mem.Allocator) AssemblyContext {
-        return AssemblyContext {
+        return AssemblyContext{
             .code = std.ArrayList(u40).init(allocator),
             .marks = std.StringHashMap(u40).init(allocator),
             .register_aliases = std.StringHashMap(u4).init(allocator),
@@ -98,6 +116,25 @@ pub const AssemblyContext = struct {
                 trimmed = std.mem.trim(u8, trimmed[val_len..], &std.ascii.whitespace);
                 try self.code.append(try std.fmt.parseInt(u40, val, 10));
                 return self.code.items[self.code.items.len - 1];
+            },
+            '*' => {
+                var val_len: usize = 1;
+                const prev = self.code.items[self.code.items.len - 1];
+                for (trimmed[1..]) |c| {
+                    if (std.ascii.isWhitespace(c)) {
+                        break;
+                    } else {
+                        val_len += 1;
+                    }
+                }
+                const val = trimmed[1..val_len];
+                trimmed = std.mem.trim(u8, trimmed[val_len..], &std.ascii.whitespace);
+                var count = try std.fmt.parseInt(u40, val, 10);
+                while (count > 0) {
+                    count -= 1;
+                    try self.code.append(prev);
+                }
+                return prev;
             },
             else => { // No sigil
                 if (std.meta.stringToEnum(kk2.InstructionType, trimmed[0..3])) |instruction_type| {
@@ -299,7 +336,7 @@ pub fn main() !void {
         if (is_kk) {
             name[name.len - 1] = 'o';
         } else {
-            @memcpy(name[name.len - 4..], ".kko");
+            @memcpy(name[name.len - 4 ..], ".kko");
         }
 
         const of = try std.fs.cwd().createFile(name, .{});
