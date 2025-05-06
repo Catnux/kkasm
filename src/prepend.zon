@@ -8,6 +8,6 @@
         ".SQRTPI 1772453851",
         ".SQRT2 1414213562",
         ".PHI 1618033989",
-        "JUMP #ENTRY",
+        "JMP #ENTRY",
     },
 }

@@ -136,6 +136,9 @@ pub const AssemblyContext = struct {
                 }
                 return prev;
             },
+            '/' => {
+                return null;
+            },
             else => { // No sigil
                 if (std.meta.stringToEnum(kk2.InstructionType, trimmed[0..3])) |instruction_type| {
                     trimmed = std.mem.trim(u8, trimmed[3..], &std.ascii.whitespace);
@@ -165,7 +168,7 @@ pub const AssemblyContext = struct {
                     }
                     trimmed = std.mem.trim(u8, trimmed, &std.ascii.whitespace);
                     const instruction = kk2.Instruction{ .type = instruction_type, .register = register, .input = switch (instruction_type) {
-                        .LOD => .{ .StaticValue = sv: {
+                        .LOD, .CTX => .{ .StaticValue = sv: {
                             if (std.ascii.isDigit(trimmed[0])) {
                                 break :sv try std.fmt.parseInt(u40, trimmed, 10);
                             } else if (trimmed[0] == '#') {
@@ -232,6 +235,7 @@ var cl_opts: struct {
     check_only: bool = false,
     out_file: ?[]const u8 = null,
     stdout: bool = false,
+    simulate: bool = false,
 } = .{};
 
 pub fn main() !void {
@@ -262,6 +266,9 @@ pub fn main() !void {
                         is_in_option = true;
                         co = 'o';
                     },
+                    rh("simulate") => {
+                        cl_opts.simulate = true;
+                    },
                     else => {
                         std.debug.print("Unknown option: --{s}\n", .{arg[2..]});
                         return error.UnknownOption;
@@ -279,6 +286,9 @@ pub fn main() !void {
                         'o' => {
                             is_in_option = true;
                             co = 'o';
+                        },
+                        's' => {
+                            cl_opts.simulate = true;
                         },
                         else => {
                             std.debug.print("Unknown option: -{c}\n", .{option});
@@ -316,6 +326,13 @@ pub fn main() !void {
             _ = try ctx.parseLine(std.mem.trimRight(u8, line, &std.ascii.whitespace));
         }
         try ctx.resolveMarks();
+    }
+
+    if (cl_opts.simulate) {
+        const sim_mem = try allocator.alloc(u40, ctx.code.items.len);
+        @memcpy(sim_mem, ctx.code.items);
+        std.debug.print("Simulation returned: {any}\n", .{kk2.simulate(ctx.code.items)});
+        allocator.free(sim_mem);
     }
 
     if (cl_opts.check_only) {
